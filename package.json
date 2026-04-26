@@ -113,11 +113,13 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "tsx --test 'src/**/*.test.ts'",
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0",
     "@types/node": "^20",
+    "@types/vscode": "^1.85.0",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   },
   "dependencies": {
