@@ -12,3 +12,6 @@ out/
 
 # Claude Code session state
 .claude/
+
+# Local-only AI agent guidance
+CLAUDE.md

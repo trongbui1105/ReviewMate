@@ -69,7 +69,6 @@ Open **Settings** (`Cmd+,`) and search "ReviewMate".
 - **[Skills](docs/skills.md)** — full feature reference and what every command does
 - **[Architecture](docs/architecture.md)** — provider pattern, data flow, file responsibilities
 - **[Technical](docs/technical.md)** — stack, build, models, release workflow
-- **[CLAUDE.md](CLAUDE.md)** — guidance for AI agents working in this repo
 
 ## Privacy
 
