@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+
+# Packaged extension artifacts
+*.vsix
+
+# OS
+.DS_Store
+
+# Claude Code session state
+.claude/

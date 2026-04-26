@@ -1,0 +1,128 @@
+{
+  "name": "reviewmate",
+  "displayName": "ReviewMate — AI Code Reviewer",
+  "description": "AI-powered code reviews in VS Code. Choose your provider: Gemini, Groq, Claude, or local Ollama.",
+  "version": "0.1.4",
+  "publisher": "trongbui",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/trongbui1105/reviewmate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/trongbui1105/reviewmate/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "ai",
+    "code review",
+    "claude",
+    "gemini",
+    "groq",
+    "ollama",
+    "linter"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "reviewmate.reviewCode",
+        "title": "Review this code",
+        "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.changeProvider",
+        "title": "Change Provider",
+        "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.clearDiagnostics",
+        "title": "Clear Diagnostics",
+        "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.openReport",
+        "title": "Open Full Report",
+        "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.showLog",
+        "title": "Show Output Log",
+        "category": "ReviewMate"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "reviewmate.reviewCode",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorTextFocus"
+      }
+    ],
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "reviewmateView",
+          "name": "ReviewMate"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ReviewMate",
+      "properties": {
+        "reviewmate.provider": {
+          "type": "string",
+          "enum": [
+            "gemini",
+            "groq",
+            "claude",
+            "ollama"
+          ],
+          "default": "gemini",
+          "description": "AI provider to use for code review"
+        },
+        "reviewmate.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "API key for the selected provider (not needed for Ollama)"
+        },
+        "reviewmate.ollamaModel": {
+          "type": "string",
+          "default": "codellama",
+          "description": "Model name when using Ollama"
+        },
+        "reviewmate.ollamaUrl": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama server URL"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20",
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "@google/generative-ai": "^0.21.0",
+    "groq-sdk": "^0.9.0"
+  }
+}
