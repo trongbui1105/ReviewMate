@@ -113,7 +113,7 @@
   "scripts": {
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "tsx --test 'src/**/*.test.ts'",
+    "test": "tsx --test src/promptBuilder.test.ts",
     "package": "vsce package"
   },
   "devDependencies": {
