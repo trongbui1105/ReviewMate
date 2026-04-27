@@ -1,11 +1,28 @@
+# Source — only the compiled output ships
+src/**
+**/*.ts
+**/*.map
+!out/**/*.js
+
+# Project metadata
 .vscode/**
 .vscode-test/**
-src/**
 .gitignore
 .git/**
+.github/**
 .eslintrc.json
 tsconfig.json
-**/*.map
-**/*.ts
-!out/**/*.js
-node_modules/**
+
+# Local-only files
+CLAUDE.md
+docs/**
+icon.svg
+*.vsix
+
+# Dev-only files inside node_modules (the rest of node_modules MUST ship —
+# this is a non-bundled extension and the runtime needs the SDKs).
+node_modules/**/*.md
+node_modules/**/*.ts
+node_modules/**/test/**
+node_modules/**/tests/**
+node_modules/**/.bin/**
