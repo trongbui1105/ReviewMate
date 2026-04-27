@@ -1,4 +1,4 @@
-import { ReviewResult, Issue, ProviderName } from './types';
+import { ReviewResult, Issue, ProviderName, PromptOptions } from './types';
 
 const VALID_SEVERITIES: ReadonlySet<string> = new Set(['critical', 'warning', 'info']);
 const VALID_CATEGORIES: ReadonlySet<string> = new Set(['bug', 'security', 'performance', 'style']);
@@ -6,10 +6,29 @@ const VALID_CATEGORIES: ReadonlySet<string> = new Set(['bug', 'security', 'perfo
 /**
  * Builds a single-string prompt to send to any AI provider for code review.
  *
- * @param code        - Source code to be reviewed.
+ * @param code        - Source code (or unified diff in `mode: 'diff'`).
  * @param languageId  - VS Code language identifier (e.g. "typescript", "python").
+ * @param options     - Optional custom instructions and mode toggle.
  */
-export function buildPrompt(code: string, languageId: string): string {
+export function buildPrompt(
+  code: string,
+  languageId: string,
+  options: PromptOptions = {}
+): string {
+  const customSection = options.customInstructions?.trim()
+    ? `\n\nAdditional project-specific instructions from the user:\n${options.customInstructions.trim()}`
+    : '';
+
+  const modeSection =
+    options.mode === 'diff'
+      ? `\n\nThe input below is a unified diff. Review ONLY the changed lines (lines starting with "+" in the new file). Use the new-file line numbers in your "line" fields. Ignore unchanged context lines.`
+      : '';
+
+  const codeBlock =
+    options.mode === 'diff'
+      ? `\`\`\`diff\n${code}\n\`\`\``
+      : `\`\`\`${languageId}\n${code}\n\`\`\``;
+
   return `You are a senior software engineer performing a code review.
 
 Respond ONLY with valid JSON. No markdown, no code fences, no preamble, no explanation.
@@ -34,14 +53,12 @@ Severity guide:
 - warning: likely bugs, performance issues, bad practices
 - info: style improvements, minor inefficiencies
 
-Focus on real issues only. Skip style nitpicks unless they create confusion or genuine harm.
+Focus on real issues only. Skip style nitpicks unless they create confusion or genuine harm.${modeSection}${customSection}
 
 Language: ${languageId}
 
 Code:
-\`\`\`${languageId}
-${code}
-\`\`\``;
+${codeBlock}`;
 }
 
 /**
@@ -74,9 +91,6 @@ function isValidIssue(value: unknown): value is Issue {
 /**
  * Parses a raw AI response into a ReviewResult. Never throws — on any failure,
  * returns a result with empty issues and a default summary.
- *
- * @param raw       - Raw text returned by the AI provider.
- * @param provider  - Provider name to embed in the result (for sidebar credit).
  */
 export function parseResponse(raw: string, provider: ProviderName): ReviewResult {
   const empty: ReviewResult = { issues: [], summary: '', provider };
@@ -115,3 +129,7 @@ export function parseResponse(raw: string, provider: ProviderName): ReviewResult
     return empty;
   }
 }
+
+// Re-export for backward compatibility with provider files that imported
+// `PromptOptions` from this module before the consolidation.
+export type { PromptOptions } from './types';

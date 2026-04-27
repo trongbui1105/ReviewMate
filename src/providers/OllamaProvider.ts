@@ -1,5 +1,5 @@
 import { AIProvider, ProviderName, ReviewResult } from '../types';
-import { buildPrompt, parseResponse } from '../promptBuilder';
+import { buildPrompt, parseResponse, PromptOptions } from '../promptBuilder';
 
 interface OllamaGenerateResponse {
   response?: string;
@@ -13,14 +13,20 @@ interface OllamaGenerateResponse {
 export class OllamaProvider implements AIProvider {
   public readonly name: ProviderName = 'ollama';
 
+  static readonly DEFAULT_MODEL = 'codellama';
+
   constructor(
     private readonly baseUrl: string,
     private readonly modelName: string
   ) {}
 
-  async review(code: string, languageId: string): Promise<ReviewResult> {
+  async review(
+    code: string,
+    languageId: string,
+    options: PromptOptions = {}
+  ): Promise<ReviewResult> {
     try {
-      const prompt = buildPrompt(code, languageId);
+      const prompt = buildPrompt(code, languageId, options);
       const url = `${this.baseUrl.replace(/\/+$/, '')}/api/generate`;
 
       const res = await fetch(url, {

@@ -1,6 +1,6 @@
 export type Severity = 'critical' | 'warning' | 'info';
 export type Category = 'bug' | 'security' | 'performance' | 'style';
-export type ProviderName = 'gemini' | 'groq' | 'claude' | 'ollama';
+export type ProviderName = 'gemini' | 'groq' | 'claude' | 'openai' | 'ollama';
 
 export interface Issue {
   /** 1-based line number where the issue starts. */
@@ -19,7 +19,18 @@ export interface ReviewResult {
   provider: ProviderName;
 }
 
+export interface PromptOptions {
+  /** Free-form user-provided instructions appended to the system prompt. */
+  customInstructions?: string;
+  /** Whether the input is a full file or a unified diff. */
+  mode?: 'full' | 'diff';
+}
+
 export interface AIProvider {
   readonly name: ProviderName;
-  review(code: string, languageId: string): Promise<ReviewResult>;
+  review(
+    code: string,
+    languageId: string,
+    options?: PromptOptions
+  ): Promise<ReviewResult>;
 }

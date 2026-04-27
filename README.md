@@ -27,10 +27,13 @@ Bring your own API key — ReviewMate doesn't proxy your code through any server
 
 | Provider          | Free?                       | Quality          | How to get a key                                          |
 |-------------------|-----------------------------|------------------|-----------------------------------------------------------|
-| **Gemini Flash**  | ✅ 1M tokens/day             | Good             | https://aistudio.google.com/apikey                        |
+| **Gemini**        | ✅ 1M tokens/day             | Good             | https://aistudio.google.com/apikey                        |
 | **Groq (Llama 3)**| ✅ ~14,400 req/day           | Good             | https://console.groq.com/keys                             |
-| **Claude Haiku**  | ❌ Paid (~$0.001/review)     | Best             | https://console.anthropic.com/settings/keys               |
+| **Claude**        | ❌ Paid (~$0.001/review)     | Top              | https://console.anthropic.com/settings/keys               |
+| **OpenAI**        | ❌ Paid (cheap on `gpt-4o-mini`) | Top          | https://platform.openai.com/api-keys                      |
 | **Ollama (local)**| ✅ Fully offline             | Varies by model  | https://ollama.com — install + `ollama pull codellama`    |
+
+Each provider's model is configurable — set `reviewmate.geminiModel`, `reviewmate.claudeModel`, etc. in settings to use a stronger (or cheaper) model than the default.
 
 ## Get started in 30 seconds
 
@@ -45,24 +48,31 @@ That's it. Issues appear inline and in the **ReviewMate** sidebar (Explorer pane
 
 ## Commands
 
-| Command                              | Default keybinding |
-|--------------------------------------|--------------------|
-| `ReviewMate: Review this code`       | `Cmd+Shift+R` / `Ctrl+Shift+R` |
-| `ReviewMate: Change Provider`        | —                  |
-| `ReviewMate: Open Full Report`       | —                  |
-| `ReviewMate: Show Output Log`        | —                  |
-| `ReviewMate: Clear Diagnostics`      | —                  |
+| Command                                  | Default keybinding |
+|------------------------------------------|--------------------|
+| `ReviewMate: Review this code`           | `Cmd+Shift+R` / `Ctrl+Shift+R` |
+| `ReviewMate: Review Uncommitted Diff`    | —                  |
+| `ReviewMate: Change Provider`            | —                  |
+| `ReviewMate: Open Full Report`           | —                  |
+| `ReviewMate: Export Report as Markdown`  | —                  |
+| `ReviewMate: Show Output Log`            | —                  |
+| `ReviewMate: Clear Diagnostics`          | —                  |
 
 ## Settings
 
 Open **Settings** (`Cmd+,`) and search "ReviewMate".
 
-| Setting                       | Default                     | Description                                       |
-|-------------------------------|-----------------------------|---------------------------------------------------|
-| `reviewmate.provider`         | `gemini`                    | One of `gemini`, `groq`, `claude`, `ollama`       |
-| `reviewmate.apiKey`           | `""`                        | API key for the selected provider (not Ollama)    |
-| `reviewmate.ollamaModel`      | `codellama`                 | Model name when using Ollama                      |
-| `reviewmate.ollamaUrl`        | `http://localhost:11434`    | Ollama server URL                                 |
+| Setting                            | Default                     | Description                                       |
+|------------------------------------|-----------------------------|---------------------------------------------------|
+| `reviewmate.provider`              | `gemini`                    | One of `gemini`, `groq`, `claude`, `openai`, `ollama` |
+| `reviewmate.apiKey`                | `""`                        | API key for the selected provider (not Ollama)    |
+| `reviewmate.customInstructions`    | `""`                        | Free-form text appended to every review prompt    |
+| `reviewmate.geminiModel`           | `""`                        | Override Gemini model (default `gemini-2.5-flash`) |
+| `reviewmate.groqModel`             | `""`                        | Override Groq model (default `llama3-70b-8192`)   |
+| `reviewmate.claudeModel`           | `""`                        | Override Claude model (default `claude-haiku-4-5-20251001`) |
+| `reviewmate.openaiModel`           | `""`                        | Override OpenAI model (default `gpt-4o-mini`)     |
+| `reviewmate.ollamaModel`           | `codellama`                 | Model name when using Ollama                      |
+| `reviewmate.ollamaUrl`             | `http://localhost:11434`    | Ollama server URL                                 |
 
 ## Documentation
 

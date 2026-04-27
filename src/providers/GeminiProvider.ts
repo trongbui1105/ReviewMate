@@ -1,19 +1,26 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AIProvider, ProviderName, ReviewResult } from '../types';
-import { buildPrompt, parseResponse } from '../promptBuilder';
+import { buildPrompt, parseResponse, PromptOptions } from '../promptBuilder';
 
 /**
- * AI provider backed by Google Gemini Flash.
- * Free tier: 15 requests/minute, ~1M tokens/day.
+ * AI provider backed by Google Gemini.
+ * Free tier on `gemini-2.5-flash`: 15 requests/minute, ~1M tokens/day.
  */
 export class GeminiProvider implements AIProvider {
   public readonly name: ProviderName = 'gemini';
 
-  private static readonly MODEL = 'gemini-2.5-flash';
+  static readonly DEFAULT_MODEL = 'gemini-2.5-flash';
 
-  constructor(private readonly apiKey: string) {}
+  constructor(
+    private readonly apiKey: string,
+    private readonly model: string = GeminiProvider.DEFAULT_MODEL
+  ) {}
 
-  async review(code: string, languageId: string): Promise<ReviewResult> {
+  async review(
+    code: string,
+    languageId: string,
+    options: PromptOptions = {}
+  ): Promise<ReviewResult> {
     const empty: ReviewResult = { issues: [], summary: '', provider: this.name };
 
     if (!this.apiKey) {
@@ -22,8 +29,8 @@ export class GeminiProvider implements AIProvider {
 
     try {
       const client = new GoogleGenerativeAI(this.apiKey);
-      const model = client.getGenerativeModel({ model: GeminiProvider.MODEL });
-      const prompt = buildPrompt(code, languageId);
+      const model = client.getGenerativeModel({ model: this.model });
+      const prompt = buildPrompt(code, languageId, options);
 
       const result = await model.generateContent(prompt);
       const text = result.response.text();

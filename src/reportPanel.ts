@@ -2,9 +2,10 @@ import * as vscode from 'vscode';
 import { ReviewResult, Issue, ProviderName } from './types';
 
 const PROVIDER_LABELS: Record<ProviderName, string> = {
-  gemini: 'Gemini Flash',
-  groq: 'Groq Llama 3',
-  claude: 'Claude Haiku',
+  gemini: 'Gemini',
+  groq: 'Groq',
+  claude: 'Claude',
+  openai: 'OpenAI',
   ollama: 'Ollama (local)',
 };
 
@@ -27,6 +28,14 @@ export class ReportPanel {
     if (this.panel) {
       this.panel.webview.html = this.buildHtml();
     }
+  }
+
+  /** Returns the last review result, or undefined if no review has run. */
+  getLastResult(): { result: ReviewResult; fileName: string } | undefined {
+    if (!this.lastResult) {
+      return undefined;
+    }
+    return { result: this.lastResult, fileName: this.lastFileName ?? '' };
   }
 
   /**

@@ -1,8 +1,8 @@
 {
   "name": "reviewmate",
   "displayName": "ReviewMate — AI Code Reviewer",
-  "description": "AI-powered code reviews in VS Code. Choose your provider: Gemini, Groq, Claude, or local Ollama.",
-  "version": "0.1.4",
+  "description": "AI-powered code reviews in VS Code. Choose your provider: Gemini, Groq, Claude, OpenAI, or local Ollama.",
+  "version": "0.2.0",
   "publisher": "trongbui",
   "license": "MIT",
   "icon": "icon.png",
@@ -26,6 +26,8 @@
     "claude",
     "gemini",
     "groq",
+    "openai",
+    "gpt",
     "ollama",
     "linter"
   ],
@@ -59,6 +61,16 @@
         "command": "reviewmate.showLog",
         "title": "Show Output Log",
         "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.reviewDiff",
+        "title": "Review Uncommitted Diff",
+        "category": "ReviewMate"
+      },
+      {
+        "command": "reviewmate.exportReport",
+        "title": "Export Report as Markdown",
+        "category": "ReviewMate"
       }
     ],
     "keybindings": [
@@ -87,6 +99,7 @@
             "gemini",
             "groq",
             "claude",
+            "openai",
             "ollama"
           ],
           "default": "gemini",
@@ -96,6 +109,32 @@
           "type": "string",
           "default": "",
           "description": "API key for the selected provider (not needed for Ollama)"
+        },
+        "reviewmate.customInstructions": {
+          "type": "string",
+          "default": "",
+          "editPresentation": "multilineText",
+          "description": "Free-form instructions appended to every review prompt. Use this to encode project-specific style or domain rules (e.g. \"we use Pydantic, not dataclasses\")."
+        },
+        "reviewmate.geminiModel": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Gemini model. Leave empty to use the default (gemini-2.5-flash)."
+        },
+        "reviewmate.groqModel": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Groq model. Leave empty to use the default (llama3-70b-8192)."
+        },
+        "reviewmate.claudeModel": {
+          "type": "string",
+          "default": "",
+          "description": "Override the Claude model. Leave empty to use the default (claude-haiku-4-5-20251001)."
+        },
+        "reviewmate.openaiModel": {
+          "type": "string",
+          "default": "",
+          "description": "Override the OpenAI model. Leave empty to use the default (gpt-4o-mini)."
         },
         "reviewmate.ollamaModel": {
           "type": "string",
@@ -125,6 +164,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",
     "@google/generative-ai": "^0.21.0",
-    "groq-sdk": "^0.9.0"
+    "groq-sdk": "^0.9.0",
+    "openai": "^6.34.0"
   }
 }

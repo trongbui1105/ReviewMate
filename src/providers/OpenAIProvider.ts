@@ -1,19 +1,20 @@
-import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { AIProvider, ProviderName, ReviewResult } from '../types';
 import { buildPrompt, parseResponse, PromptOptions } from '../promptBuilder';
 
 /**
- * AI provider backed by Groq.
- * Free tier on `llama3-70b-8192`: ~14,400 requests/day.
+ * AI provider backed by OpenAI.
+ * Default model `gpt-4o-mini` is cheap (~$0.0001/review) and fast.
+ * Users can switch to `gpt-4o`, `o1-mini`, etc. via `reviewmate.openaiModel`.
  */
-export class GroqProvider implements AIProvider {
-  public readonly name: ProviderName = 'groq';
+export class OpenAIProvider implements AIProvider {
+  public readonly name: ProviderName = 'openai';
 
-  static readonly DEFAULT_MODEL = 'llama3-70b-8192';
+  static readonly DEFAULT_MODEL = 'gpt-4o-mini';
 
   constructor(
     private readonly apiKey: string,
-    private readonly model: string = GroqProvider.DEFAULT_MODEL
+    private readonly model: string = OpenAIProvider.DEFAULT_MODEL
   ) {}
 
   async review(
@@ -28,7 +29,7 @@ export class GroqProvider implements AIProvider {
     }
 
     try {
-      const client = new Groq({ apiKey: this.apiKey });
+      const client = new OpenAI({ apiKey: this.apiKey });
       const prompt = buildPrompt(code, languageId, options);
 
       const response = await client.chat.completions.create({
@@ -39,13 +40,14 @@ export class GroqProvider implements AIProvider {
         ],
         temperature: 0.2,
         max_tokens: 1500,
+        response_format: { type: 'json_object' },
       });
 
       const text = response.choices[0]?.message?.content ?? '';
       return parseResponse(text, this.name);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      throw new Error(`Groq: ${message}`);
+      throw new Error(`OpenAI: ${message}`);
     }
   }
 }

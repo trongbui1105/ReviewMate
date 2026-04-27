@@ -5,7 +5,9 @@ import { UsageTracker } from './usageTracker';
 import { SidebarPanel } from './sidebarPanel';
 import { ReportPanel } from './reportPanel';
 import { OutputLog } from './outputLog';
-import { ProviderName } from './types';
+import { ProviderName, ReviewResult } from './types';
+import { getDiff } from './git';
+import { renderMarkdown } from './exporter';
 
 const LARGE_FILE_LINE_THRESHOLD = 500;
 
@@ -15,9 +17,10 @@ interface ProviderPickItem extends vscode.QuickPickItem {
 }
 
 const PROVIDER_PICKS: ProviderPickItem[] = [
-  { label: 'Gemini Flash',   description: 'Free — 1M tokens/day',         value: 'gemini', needsKey: true  },
+  { label: 'Gemini',         description: 'Free — 1M tokens/day',         value: 'gemini', needsKey: true  },
   { label: 'Groq (Llama 3)', description: 'Free — 14,400 req/day',        value: 'groq',   needsKey: true  },
-  { label: 'Claude Haiku',   description: 'Paid — best quality',          value: 'claude', needsKey: true  },
+  { label: 'Claude',         description: 'Paid — top quality',           value: 'claude', needsKey: true  },
+  { label: 'OpenAI',         description: 'Paid — broad model lineup',    value: 'openai', needsKey: true  },
   { label: 'Ollama (local)', description: 'Free — runs on your machine',  value: 'ollama', needsKey: false },
 ];
 
@@ -29,6 +32,30 @@ export function activate(context: vscode.ExtensionContext): void {
   const reportPanel = new ReportPanel();
   const outputLog = new OutputLog(context);
 
+  // ── Status bar item ─────────────────────────────────────────────────────
+  const statusBar = vscode.window.createStatusBarItem(
+    vscode.StatusBarAlignment.Right,
+    100
+  );
+  statusBar.command = 'reviewmate.reviewCode';
+  statusBar.text = '$(eye) ReviewMate';
+  statusBar.tooltip = 'Run ReviewMate on the active file (Cmd+Shift+R)';
+  statusBar.show();
+  context.subscriptions.push(statusBar);
+
+  function updateStatusBar(result: ReviewResult): void {
+    const count = result.issues.length;
+    const critical = result.issues.filter((i) => i.severity === 'critical').length;
+    if (count === 0) {
+      statusBar.text = '$(check) ReviewMate: clean';
+    } else if (critical > 0) {
+      statusBar.text = `$(error) ReviewMate: ${count} (${critical} critical)`;
+    } else {
+      statusBar.text = `$(warning) ReviewMate: ${count}`;
+    }
+  }
+
+  // ── Sidebar webview registration ───────────────────────────────────────
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SidebarPanel.viewId, sidebarPanel)
   );
@@ -46,6 +73,42 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // ── Shared review-runner used by both reviewCode and reviewDiff ────────
+  async function runReview(
+    code: string,
+    languageId: string,
+    editor: vscode.TextEditor,
+    progressTitle: string,
+    mode: 'full' | 'diff'
+  ): Promise<void> {
+    diagnosticsManager.clear();
+
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: progressTitle,
+        cancellable: false,
+      },
+      async () => {
+        const result = await review(code, languageId, context, { mode });
+        const fileName = vscode.workspace.asRelativePath(editor.document.uri);
+        diagnosticsManager.showIssues(result.issues, editor);
+        sidebarPanel.update(result);
+        reportPanel.update(result, fileName);
+        outputLog.logReview(result, fileName);
+        usageTracker.increment();
+        updateStatusBar(result);
+
+        const count = result.issues.length;
+        const message =
+          count === 0
+            ? 'ReviewMate: No issues found.'
+            : `ReviewMate: ${count} issue${count === 1 ? '' : 's'} found.`;
+        vscode.window.setStatusBarMessage(message, 5000);
+      }
+    );
+  }
+
   // ── reviewmate.reviewCode ──────────────────────────────────────────────
   const reviewCmd = vscode.commands.registerCommand('reviewmate.reviewCode', async () => {
     const editor = vscode.window.activeTextEditor;
@@ -55,7 +118,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
 
     const selection = editor.selection;
-    let code = selection.isEmpty
+    const code = selection.isEmpty
       ? editor.document.getText()
       : editor.document.getText(selection);
 
@@ -64,7 +127,6 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    // For very large files, require a selection rather than blasting the whole doc.
     if (selection.isEmpty && editor.document.lineCount > LARGE_FILE_LINE_THRESHOLD) {
       vscode.window.showWarningMessage(
         `ReviewMate: File is over ${LARGE_FILE_LINE_THRESHOLD} lines. Select the section you want to review.`
@@ -72,31 +134,46 @@ export function activate(context: vscode.ExtensionContext): void {
       return;
     }
 
-    const languageId = editor.document.languageId;
-    diagnosticsManager.clear();
+    await runReview(code, editor.document.languageId, editor, 'ReviewMate: reviewing…', 'full');
+  });
 
-    await vscode.window.withProgress(
-      {
-        location: vscode.ProgressLocation.Notification,
-        title: 'ReviewMate: reviewing…',
-        cancellable: false,
-      },
-      async () => {
-        const result = await review(code, languageId, context);
-        const fileName = vscode.workspace.asRelativePath(editor.document.uri);
-        diagnosticsManager.showIssues(result.issues, editor);
-        sidebarPanel.update(result);
-        reportPanel.update(result, fileName);
-        outputLog.logReview(result, fileName);
-        usageTracker.increment();
+  // ── reviewmate.reviewDiff ──────────────────────────────────────────────
+  const reviewDiffCmd = vscode.commands.registerCommand('reviewmate.reviewDiff', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showWarningMessage('ReviewMate: Open a file to review.');
+      return;
+    }
 
-        const count = result.issues.length;
-        const message =
-          count === 0
-            ? 'ReviewMate: No issues found.'
-            : `ReviewMate: ${count} issue${count === 1 ? '' : 's'} found.`;
-        vscode.window.setStatusBarMessage(message, 5000);
-      }
+    if (editor.document.uri.scheme !== 'file') {
+      vscode.window.showWarningMessage(
+        'ReviewMate: Diff review only works on saved files.'
+      );
+      return;
+    }
+
+    let diff: string;
+    try {
+      diff = await getDiff(editor.document.uri.fsPath);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`ReviewMate: ${message}`);
+      return;
+    }
+
+    if (!diff.trim()) {
+      vscode.window.showInformationMessage(
+        'ReviewMate: No uncommitted changes to review on this file.'
+      );
+      return;
+    }
+
+    await runReview(
+      diff,
+      editor.document.languageId,
+      editor,
+      'ReviewMate: reviewing diff…',
+      'diff'
     );
   });
 
@@ -113,11 +190,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       const config = vscode.workspace.getConfiguration('reviewmate');
-      await config.update(
-        'provider',
-        pick.value,
-        vscode.ConfigurationTarget.Global
-      );
+      await config.update('provider', pick.value, vscode.ConfigurationTarget.Global);
 
       if (pick.needsKey) {
         const existing = config.get<string>('apiKey', '');
@@ -138,9 +211,48 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
+  // ── reviewmate.exportReport ────────────────────────────────────────────
+  const exportCmd = vscode.commands.registerCommand('reviewmate.exportReport', async () => {
+    const last = reportPanel.getLastResult();
+    if (!last) {
+      vscode.window.showWarningMessage(
+        'ReviewMate: Run a review first, then export.'
+      );
+      return;
+    }
+
+    const md = renderMarkdown(last.result, last.fileName);
+
+    const editor = vscode.window.activeTextEditor;
+    const defaultUri =
+      editor && editor.document.uri.scheme === 'file'
+        ? vscode.Uri.file(`${editor.document.uri.fsPath}.review.md`)
+        : undefined;
+
+    const target = await vscode.window.showSaveDialog({
+      title: 'Save ReviewMate report',
+      defaultUri,
+      filters: { Markdown: ['md'] },
+    });
+    if (!target) {
+      return;
+    }
+
+    await vscode.workspace.fs.writeFile(target, Buffer.from(md, 'utf8'));
+    const open = await vscode.window.showInformationMessage(
+      `ReviewMate: Report saved to ${vscode.workspace.asRelativePath(target)}`,
+      'Open'
+    );
+    if (open === 'Open') {
+      const doc = await vscode.workspace.openTextDocument(target);
+      await vscode.window.showTextDocument(doc);
+    }
+  });
+
   // ── reviewmate.clearDiagnostics ────────────────────────────────────────
   const clearCmd = vscode.commands.registerCommand('reviewmate.clearDiagnostics', () => {
     diagnosticsManager.clear();
+    statusBar.text = '$(eye) ReviewMate';
   });
 
   // ── reviewmate.openReport ──────────────────────────────────────────────
@@ -155,10 +267,12 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     reviewCmd,
+    reviewDiffCmd,
     changeProviderCmd,
     clearCmd,
     openReportCmd,
     showLogCmd,
+    exportCmd,
     { dispose: () => diagnosticsManager.dispose() }
   );
 }

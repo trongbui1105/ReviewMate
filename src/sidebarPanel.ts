@@ -3,9 +3,10 @@ import { ReviewResult, Issue, ProviderName } from './types';
 import { UsageTracker } from './usageTracker';
 
 const PROVIDER_LABELS: Record<ProviderName, string> = {
-  gemini: 'Gemini Flash',
-  groq: 'Groq Llama 3',
-  claude: 'Claude Haiku',
+  gemini: 'Gemini',
+  groq: 'Groq',
+  claude: 'Claude',
+  openai: 'OpenAI',
   ollama: 'Ollama (local)',
 };
 
