@@ -58,6 +58,12 @@ Severity guide:
 - warning: likely bugs, performance issues, bad practices
 - info: style improvements, minor inefficiencies
 
+Category rules:
+- "bug" is reserved for ACTUAL defects (critical or warning severity only). Never pair "bug" with "info".
+- "security" is for vulnerabilities, regardless of severity.
+- "performance" is for slow code or wasted work.
+- "style" is for naming, formatting, readability, idiom — most "info" issues belong here.
+
 Focus on real issues only. Skip style nitpicks unless they create confusion or genuine harm.${lineRangeSection}${modeSection}${customSection}
 
 Language: ${languageId}
@@ -120,7 +126,13 @@ export function parseResponse(raw: string, provider: ProviderName): ReviewResult
       line: issue.line,
       endLine: typeof issue.endLine === 'number' ? issue.endLine : issue.line,
       severity: issue.severity,
-      category: issue.category,
+      // The "bug" category is reserved for actual defects. If the model
+      // tagged something as info-level "bug", remap to "style" — the
+      // category most likely correct for a low-impact note.
+      category:
+        issue.severity === 'info' && issue.category === 'bug'
+          ? 'style'
+          : issue.category,
       message: issue.message,
       fix: issue.fix,
     }));
