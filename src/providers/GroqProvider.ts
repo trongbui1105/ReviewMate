@@ -9,7 +9,7 @@ import { buildPrompt, parseResponse, PromptOptions } from '../promptBuilder';
 export class GroqProvider implements AIProvider {
   public readonly name: ProviderName = 'groq';
 
-  static readonly DEFAULT_MODEL = 'llama3-70b-8192';
+  static readonly DEFAULT_MODEL = 'llama-3.3-70b-versatile';
 
   constructor(
     private readonly apiKey: string,

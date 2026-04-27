@@ -2,7 +2,7 @@
   "name": "reviewmate",
   "displayName": "ReviewMate — AI Code Reviewer",
   "description": "AI-powered code reviews in VS Code. Choose your provider: Gemini, Groq, Claude, OpenAI, or local Ollama.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "trongbui",
   "license": "MIT",
   "icon": "icon.png",
@@ -124,7 +124,7 @@
         "reviewmate.groqModel": {
           "type": "string",
           "default": "",
-          "description": "Override the Groq model. Leave empty to use the default (llama3-70b-8192)."
+          "description": "Override the Groq model. Leave empty to use the default (llama-3.3-70b-versatile)."
         },
         "reviewmate.claudeModel": {
           "type": "string",

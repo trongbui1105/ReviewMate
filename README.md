@@ -68,7 +68,7 @@ Open **Settings** (`Cmd+,`) and search "ReviewMate".
 | `reviewmate.apiKey`                | `""`                        | API key for the selected provider (not Ollama)    |
 | `reviewmate.customInstructions`    | `""`                        | Free-form text appended to every review prompt    |
 | `reviewmate.geminiModel`           | `""`                        | Override Gemini model (default `gemini-2.5-flash`) |
-| `reviewmate.groqModel`             | `""`                        | Override Groq model (default `llama3-70b-8192`)   |
+| `reviewmate.groqModel`             | `""`                        | Override Groq model (default `llama-3.3-70b-versatile`) |
 | `reviewmate.claudeModel`           | `""`                        | Override Claude model (default `claude-haiku-4-5-20251001`) |
 | `reviewmate.openaiModel`           | `""`                        | Override OpenAI model (default `gpt-4o-mini`)     |
 | `reviewmate.ollamaModel`           | `codellama`                 | Model name when using Ollama                      |
