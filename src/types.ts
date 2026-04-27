@@ -24,6 +24,8 @@ export interface PromptOptions {
   customInstructions?: string;
   /** Whether the input is a full file or a unified diff. */
   mode?: 'full' | 'diff';
+  /** Total line count of the file (used to constrain the AI's line numbers). */
+  totalLines?: number;
 }
 
 export interface AIProvider {

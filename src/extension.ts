@@ -82,6 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
     mode: 'full' | 'diff'
   ): Promise<void> {
     diagnosticsManager.clear();
+    const totalLines = editor.document.lineCount;
 
     await vscode.window.withProgress(
       {
@@ -90,7 +91,22 @@ export function activate(context: vscode.ExtensionContext): void {
         cancellable: false,
       },
       async () => {
-        const result = await review(code, languageId, context, { mode });
+        const raw = await review(code, languageId, context, { mode, totalLines });
+
+        // Defensive filter: drop any issue with a line number outside the
+        // file. Weaker models occasionally hallucinate line numbers past
+        // the end of the file. Skip this filter in diff mode since line
+        // numbers there refer to the new-file state which we can't validate.
+        const result =
+          mode === 'diff'
+            ? raw
+            : {
+                ...raw,
+                issues: raw.issues.filter(
+                  (i) => i.line >= 1 && i.line <= totalLines
+                ),
+              };
+
         const fileName = vscode.workspace.asRelativePath(editor.document.uri);
         diagnosticsManager.showIssues(result.issues, editor);
         sidebarPanel.update(result);
@@ -99,11 +115,13 @@ export function activate(context: vscode.ExtensionContext): void {
         usageTracker.increment();
         updateStatusBar(result);
 
+        const dropped = raw.issues.length - result.issues.length;
         const count = result.issues.length;
+        const droppedNote = dropped > 0 ? ` (${dropped} hallucinated line numbers dropped)` : '';
         const message =
           count === 0
-            ? 'ReviewMate: No issues found.'
-            : `ReviewMate: ${count} issue${count === 1 ? '' : 's'} found.`;
+            ? `ReviewMate: No issues found.${droppedNote}`
+            : `ReviewMate: ${count} issue${count === 1 ? '' : 's'} found.${droppedNote}`;
         vscode.window.setStatusBarMessage(message, 5000);
       }
     );

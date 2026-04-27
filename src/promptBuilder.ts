@@ -24,6 +24,11 @@ export function buildPrompt(
       ? `\n\nThe input below is a unified diff. Review ONLY the changed lines (lines starting with "+" in the new file). Use the new-file line numbers in your "line" fields. Ignore unchanged context lines.`
       : '';
 
+  const lineRangeSection =
+    options.totalLines && options.mode !== 'diff'
+      ? `\n\nIMPORTANT: The file has exactly ${options.totalLines} lines (numbered 1 to ${options.totalLines}). Every "line" and "endLine" value you return MUST be an integer between 1 and ${options.totalLines} inclusive. Do not invent line numbers beyond the file's length. Count carefully.`
+      : '';
+
   const codeBlock =
     options.mode === 'diff'
       ? `\`\`\`diff\n${code}\n\`\`\``
@@ -53,7 +58,7 @@ Severity guide:
 - warning: likely bugs, performance issues, bad practices
 - info: style improvements, minor inefficiencies
 
-Focus on real issues only. Skip style nitpicks unless they create confusion or genuine harm.${modeSection}${customSection}
+Focus on real issues only. Skip style nitpicks unless they create confusion or genuine harm.${lineRangeSection}${modeSection}${customSection}
 
 Language: ${languageId}
 
