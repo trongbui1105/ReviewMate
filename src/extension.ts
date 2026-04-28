@@ -9,7 +9,7 @@ import { ProviderName, ReviewResult } from './types';
 import { getDiff } from './git';
 import { renderMarkdown } from './exporter';
 
-const LARGE_FILE_LINE_THRESHOLD = 500;
+const LARGE_FILE_LINE_THRESHOLD = 1000;
 
 interface ProviderPickItem extends vscode.QuickPickItem {
   value: ProviderName;
